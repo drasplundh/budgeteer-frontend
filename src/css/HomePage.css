@@ -1,0 +1,72 @@
+
+
+.container {
+  margin-top: 16px;
+  background-color: #FCFAFA;
+}
+
+.pt {
+  padding-top: 16px;
+}
+
+th {
+  max-width: 75px;
+}
+
+.vendor-cell {
+    /* max-width: 250px; */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+
+.table-head {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.table-body {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.cell-r {
+  text-align: right;
+}
+
+/* .vendor-cell:hover {
+  color: blue;
+} */
+
+.col .total-expense .charts {
+ padding-left: 0px;
+}
+
+td.expensive {
+  color: #E85F5C;
+}
+
+.total-expense {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #C8D3D5;
+}
+
+.charts {
+  background-color: #C8D3D5;
+}
+
+.expense-table {
+  background-color: #C8D3D5;
+  height: 100%;
+  padding-bottom: 16px;
+}
+
+.table-scroll {
+  overflow-y: auto;
+}
+
+.expense-chart {
+  background-color: #C8D3D5;
+}
