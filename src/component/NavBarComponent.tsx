@@ -30,25 +30,12 @@ function NavBar() {
         <div className='nav-container'>
             <div className='row cust-row'>
                 <div className='col ms-3 d-flex'>
-                    <h2>Budgeteer</h2>
+                    <h2 onClick={() => navigate('/')}>Budgeteer</h2>
                     {/* <h2 onClick>Categorize</h2> */}
                 </div>
 
                 <div className='col center right d-flex'>
-
-                    {/* Notification */}
-                    <div className='notification' style={{ position: 'relative', display: 'inline-block' }}>
-                        <Bell size={24} />
-                        <span className="badge bg-danger" style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            fontSize: '10px'
-                        }}>
-                            {/* {notifications} */}
-                        </span>
-                    </div>
-
+                    <h3 onClick={() => navigate('/manual-entry')}>Manual Entry</h3>
                 </div>
                 <div className='col center left d-flex'>
                     <h3 onClick={() => navigate('/categorize')}>Categorize</h3>

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NavBar from './component/NavBarComponent';
 import HomePage from './component/HomePageComponent';
 import Categorize from './component/CategorizeComponent';
+import ManualEntry from './component/ManualEntryComponent';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path='/categorize' element={<Categorize />} />
+          <Route path='/manual-entry' element={<ManualEntry />} />
         </Routes>
       </div>
     </BrowserRouter>

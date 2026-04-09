@@ -1,5 +1,4 @@
-import '../css/HomePage.css'
-
+import '../css/HomePage.css';
 import { useQueries } from '@tanstack/react-query';
 import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
@@ -24,6 +23,7 @@ if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.err
 // only access data after loading checks
 const expenses = expensesQuery.data;
 const categories = categoriesQuery.data;
+console.log(expenses);
 
 
     const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0);
@@ -61,7 +61,7 @@ const categories = categoriesQuery.data;
                                         </td>
                                         {/* <td>{expense.cost}</td> */}
                                         <td className='cell-r'>{expense.date}</td>
-                                        <td className='cell-r'>{expense.category.categoryName}</td>
+                                        <td className='cell-r'>{expense.category?.categoryName ?? "no category"}</td>
                                     </tr>
                                 ))}
                             </tbody>
