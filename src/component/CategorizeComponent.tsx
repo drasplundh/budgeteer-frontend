@@ -1,11 +1,24 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchExpenses, updateExpense } from '../api/ExpenseApi';
+import { fetchCategories } from "../api/CategoryApi";
 import { useState } from 'react'
+import { search } from 'fast-fuzzy';
+
+
+// ChatGPTed the shit outta this. Probably should look over how it works.
 
 function Categorize() {
 
+    // keep track of editing
+    const [isEditing, setIsEditing] = useState(false);
+
+    const [categoryInputs, setCategoryInputs] = useState<Record<number, string>>({})
+
+
     const queryClient = useQueryClient();
 
+
+    // update func
     const { mutate: updateExpenseMutation } = useMutation({
         mutationFn: (updateCategoryRequest: { expenseId: number, categoryName: string, subcategoryName?: string }) =>
             updateExpense(updateCategoryRequest),
@@ -14,26 +27,35 @@ function Categorize() {
         }
     });
 
-    const {
-        data,
-        isLoading,
-        isError,
-        error
-    } = useQuery({
-        queryKey: ['expenses'],
-        queryFn: fetchExpenses
+    // expense/categories fetch
+    const [expensesQuery, categoriesQuery] = useQueries({
+        queries: [
+            { queryKey: ['expenses'], queryFn: fetchExpenses },
+            { queryKey: ['categories'], queryFn: fetchCategories }
+        ]
     });
-    const [isEditing, setIsEditing] = useState(false);
+
+    // some kind of check - look into this
+    if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
+    if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
+    if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
 
 
-    if (isLoading) return <div>Loading...</div>;
+    // only access data after loading checks
+    const expenses = expensesQuery.data;
+    const categories = categoriesQuery.data;
+    console.log("expenses", expenses);
 
-    if (isError) return <div>Error: {(error as Error).message}</div>;
+    const uncategorized = expenses.filter((expense: any) => expense.category === null);
+    console.log("uncategorized", uncategorized);
 
-    const uncategorized = data.filter((expense: any) => expense.category === null);
 
 
-    // your button
+
+
+
+
+
 
     return (
         <div className="container">
@@ -55,38 +77,95 @@ function Categorize() {
                 <div className="table-scroll" style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
                     <table className='table table-body'>
                         <tbody>
-                            {uncategorized.map((expense: any) => (
-                                <tr>
-                                    {/* <td className="vendor-cell">{expense.vendor}</td> */}
-                                    <td className="vendor-cell cell-l" data-bs-toggle="tooltip" title={expense.vendor}>
-                                        {expense.vendor}
-                                    </td>
-                                    <td className={expense.cost > 200 ? 'expensive cell-r' : 'cell-r'}>
-                                        {expense.cost}
-                                    </td>
-                                    <td className='cell-r'>{expense.date}</td>
-                                    <td className="category-cell cell-r">
-                                        {isEditing ? (
-                                            <input
-                                                defaultValue={expense.category?.categoryName}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        updateExpenseMutation({
-                                                            expenseId: expense.expenseId,
-                                                            categoryName: e.currentTarget.value
-                                                        })
-                                                    }
-                                                }}
-                                            />
-                                        ) : (
-                                            expense.category?.categoryName ?? 'Uncategorized'
-                                        )}
-                                    </td>
-                                    <td className='cell-r'>
-                                        subcategories
-                                    </td>
-                                </tr>
-                            ))}
+                            {uncategorized.map((expense: any) => {
+                                const inputValue = categoryInputs[expense.expenseId] ?? '';
+                                const match = categories.find((c: any) =>
+                                    c.categoryName.toLowerCase().startsWith(inputValue.toLowerCase()));
+
+                                const remaining = match && match.categoryName.toLowerCase().startsWith(inputValue.toLowerCase())
+                                    ? match.categoryName.slice(inputValue.length) : '';
+
+                                const names = categories.map((c: any) => c.categoryName);
+                                const suggestion = search(
+                                    inputValue,
+                                    names,
+                                )[0] as { item: string; score: number}
+                                const didYouMean = suggestion && suggestion.score > 0.7 && suggestion.item.toLowerCase() !== inputValue.toLowerCase() 
+                                ? suggestion.item : null
+                                return (
+                                    <tr key={expense.expenseId}>
+                                        {/* <td className="vendor-cell">{expense.vendor}</td> */}
+                                        <td className="vendor-cell cell-l" data-bs-toggle="tooltip" title={expense.vendor}>
+                                            {expense.vendor}
+                                        </td>
+                                        <td className={expense.cost > 200 ? 'expensive cell-r' : 'cell-r'}>
+                                            {expense.cost}
+                                        </td>
+                                        <td className='cell-r'>{expense.date}</td>
+                                        <td className="category-cell cell-r">
+                                            {isEditing ? (
+                                                <div style={{ position: 'relative' }}>
+                                                    <div
+                                                        className="form-control"
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            left: 0,
+                                                            color: '#aaa',
+                                                            pointerEvents: 'none',
+                                                            background: 'transparent'
+                                                        }}
+                                                    >
+                                                        {inputValue}
+                                                        {remaining}
+                                                    </div>
+
+                                                    <input
+                                                        className='form-control'
+                                                        value={inputValue}
+                                                        onChange={(e) => {
+                                                            setCategoryInputs((prev) => ({
+                                                                ...prev, [expense.expenseId]: e.target.value
+
+                                                            }))
+                                                            console.log(inputValue);
+
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (
+                                                                (e.key === 'Tab') && match
+                                                            ) {
+                                                                e.preventDefault();
+                                                                setCategoryInputs((prev) => ({
+                                                                    ...prev,
+                                                                    [expense.expenseId]: match.categoryName
+                                                                }))
+                                                                return
+                                                            }
+                                                            if (e.key === 'Enter') {
+
+                                                                updateExpenseMutation({
+                                                                    expenseId: expense.expenseId,
+                                                                    categoryName: inputValue
+                                                                });
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            position: 'relative',
+                                                            background: 'transparent'
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                expense.category?.categoryName ?? 'Uncategorized'
+                                            )}
+                                        </td>
+                                        <td className='cell-r'>
+                                            subcategories
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
