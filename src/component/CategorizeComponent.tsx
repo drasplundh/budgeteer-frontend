@@ -78,20 +78,19 @@ function Categorize() {
                     <table className='table table-body'>
                         <tbody>
                             {uncategorized.map((expense: any) => {
+                                                                const names = categories.map((c: any) => c.categoryName);
                                 const inputValue = categoryInputs[expense.expenseId] ?? '';
-                                const match = categories.find((c: any) =>
-                                    c.categoryName.toLowerCase().startsWith(inputValue.toLowerCase()));
+const match = inputValue.length >= 3 
+    ? search(inputValue, names, { threshold: 0.4, returnMatchData: true })[0] as { item: string; original: string, score: number} | undefined
+    : undefined;
 
-                                const remaining = match && match.categoryName.toLowerCase().startsWith(inputValue.toLowerCase())
-                                    ? match.categoryName.slice(inputValue.length) : '';
+const remaining = match?.item.toLowerCase().startsWith(inputValue.toLowerCase())
+    ? match.item.slice(inputValue.length)
+    : '';
 
-                                const names = categories.map((c: any) => c.categoryName);
-                                const suggestion = search(
-                                    inputValue,
-                                    names,
-                                )[0] as { item: string; score: number}
-                                const didYouMean = suggestion && suggestion.score > 0.7 && suggestion.item.toLowerCase() !== inputValue.toLowerCase() 
-                                ? suggestion.item : null
+const didYouMean = match?.item && match.item.toLowerCase() !== inputValue.toLowerCase()
+    ? match.item
+    : null;
                                 return (
                                     <tr key={expense.expenseId}>
                                         {/* <td className="vendor-cell">{expense.vendor}</td> */}
@@ -138,12 +137,19 @@ function Categorize() {
                                                                 e.preventDefault();
                                                                 setCategoryInputs((prev) => ({
                                                                     ...prev,
-                                                                    [expense.expenseId]: match.categoryName
+                                                                    [expense.expenseId]: match.item
                                                                 }))
                                                                 return
                                                             }
                                                             if (e.key === 'Enter') {
-
+                                                                if (didYouMean) {
+                                                                    const confirmed = window.confirm(`Did you mean "${didYouMean}"?`)
+                                                                    updateExpenseMutation({
+                                                                        expenseId: expense.expenseId,
+                                                                        categoryName: confirmed ? didYouMean : inputValue
+                                                                    });
+                                                                    return;
+                                                                }
                                                                 updateExpenseMutation({
                                                                     expenseId: expense.expenseId,
                                                                     categoryName: inputValue
