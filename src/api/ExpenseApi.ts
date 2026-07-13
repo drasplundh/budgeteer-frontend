@@ -13,10 +13,10 @@ export const updateExpense = async (updateCategoryRequest: {
     subcategoryName?: String
 }) => {
     // const response = await fetch("/api/expense/update-category");
-    const { data } = await api.put("/expense/update-category", {
-        id: updateCategoryRequest.expenseId,
+    const { data } = await api.put("/expense/update-subcategory", {
+        expenseId: updateCategoryRequest.expenseId,
         categoryName: updateCategoryRequest.categoryName,
-        subCategoryName: updateCategoryRequest.subcategoryName,
+        subcategoryName: updateCategoryRequest.subcategoryName,
     });
     return data;
 };

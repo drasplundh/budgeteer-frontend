@@ -140,7 +140,7 @@ function Categorize() {
                                                             }));
                                                         }}
                                                         onKeyDown={(e) => {
-                                                            if (e.key === 'Tab' && categoryMatch) {
+                                                            if (e.key === 'Tab' && categoryMatch && categoryInput !== categoryMatch.item) {
                                                                 e.preventDefault();
                                                                 setCategoryInputs((prev) => ({
                                                                     ...prev,
@@ -148,20 +148,20 @@ function Categorize() {
                                                                 }));
                                                                 return;
                                                             }
-                                                            if (e.key === 'Enter') {
-                                                                if (categoryDidYouMean) {
-                                                                    const confirmed = window.confirm(`Did you mean "${categoryDidYouMean}"?`);
-                                                                    updateExpenseMutation({
-                                                                        expenseId: expense.expenseId,
-                                                                        categoryName: confirmed ? categoryDidYouMean : categoryInput
-                                                                    });
-                                                                    return;
-                                                                }
-                                                                updateExpenseMutation({
-                                                                    expenseId: expense.expenseId,
-                                                                    categoryName: categoryInput
-                                                                });
-                                                            }
+                                                            // if (e.key === 'Enter') {
+                                                            //     if (categoryDidYouMean) {
+                                                            //         const confirmed = window.confirm(`Did you mean "${categoryDidYouMean}"?`);
+                                                            //         updateExpenseMutation({
+                                                            //             expenseId: expense.expenseId,
+                                                            //             categoryName: confirmed ? categoryDidYouMean : categoryInput
+                                                            //         });
+                                                            //         return;
+                                                            //     }
+                                                            //     updateExpenseMutation({
+                                                            //         expenseId: expense.expenseId,
+                                                            //         categoryName: categoryInput
+                                                            //     });
+                                                            // }
                                                         }}
                                                         style={{ position: 'relative', background: 'transparent' }}
                                                     />
@@ -206,19 +206,34 @@ function Categorize() {
                                                                 return;
                                                             }
                                                             if (e.key === 'Enter') {
-                                                                if (subcategoryDidYouMean) {
-                                                                    const confirmed = window.confirm(`Did you mean "${subcategoryDidYouMean}"?`);
+                                                                if (!categoryInput || !subcategoryInput) {
+                                                                    window.alert("Please enter both a category and subcategory");
+                                                                    return;
+                                                                }
+                                                                let finalCategoryName = categoryInput;
+                                                                let finalSubcategoryName = subcategoryInput;
+                                                                if (subcategoryDidYouMean || categoryDidYouMean) {
+                                                                    const lines = [];
+                                                                    if (categoryDidYouMean) lines.push(`Category: "${categoryDidYouMean}"`);
+                                                                    if (subcategoryDidYouMean) lines.push(`Subcategory: "${subcategoryDidYouMean}"`);
+
+                                                                    const confirmed = window.confirm(`Did you mean:\n${lines.join('\n')}?`);
+
+                                                                    if (confirmed) {
+                                                                        if (categoryDidYouMean) finalCategoryName = categoryDidYouMean;
+                                                                        if (subcategoryDidYouMean) finalSubcategoryName = subcategoryDidYouMean;
+                                                                    }
                                                                     updateExpenseMutation({
                                                                         expenseId: expense.expenseId,
-                                                                        categoryName: categoryInput,
-                                                                        subcategoryName: confirmed ? subcategoryDidYouMean : subcategoryInput
+                                                                        categoryName: finalCategoryName,
+                                                                        subcategoryName: finalSubcategoryName
                                                                     });
                                                                     return;
                                                                 }
                                                                 updateExpenseMutation({
                                                                     expenseId: expense.expenseId,
-                                                                    categoryName: categoryInput,
-                                                                    subcategoryName: subcategoryInput
+                                                                    categoryName: finalCategoryName,
+                                                                    subcategoryName: finalSubcategoryName
                                                                 });
                                                             }
                                                         }}
