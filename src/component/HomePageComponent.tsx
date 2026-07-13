@@ -6,6 +6,7 @@ import { fetchCategories } from '../api/CategoryApi';
 import ChartComponent from './ChartComponent';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useState } from 'react';
 
 // TODO make the charts filterable by month or YTD
 
@@ -18,6 +19,13 @@ function HomePageComponent() {
             { queryKey: ['categories'], queryFn: fetchCategories }
         ]
     });
+
+const [toggleCategories, setToggleCategories] = useState(false);
+function handleToggle() {
+    setToggleCategories(prev => !prev);
+}
+
+
 
 
     if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
@@ -87,9 +95,12 @@ function HomePageComponent() {
                     <div className='total-expense' style={{ flex: "0 0 10%" }}>
                         <h2>${totalCost}</h2>
                     </div>
+                    <button className="custom-btn" onClick={handleToggle}>
+                        {toggleCategories ? 'Categories' : 'Subcategories'}
+                    </button>
 
                     <div className='charts' style={{ flex: 1, minHeight: 0 }}>
-                        <ChartComponent />
+                        <ChartComponent showCategories={toggleCategories}/>
                     </div>
                 </div>
             </div>
