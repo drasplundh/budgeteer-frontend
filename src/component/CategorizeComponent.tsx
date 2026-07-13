@@ -1,6 +1,7 @@
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchExpenses, updateExpense } from '../api/ExpenseApi';
 import { fetchCategories } from "../api/CategoryApi";
+import { fetchSubcategories } from '../api/SubcategoryApi';
 import { useState } from 'react'
 import { search } from 'fast-fuzzy';
 
@@ -21,21 +22,24 @@ function Categorize() {
         }
     });
 
-    const [expensesQuery, categoriesQuery] = useQueries({
+    const [expensesQuery, categoriesQuery, subcategoriesQuery] = useQueries({
         queries: [
             { queryKey: ['expenses'], queryFn: fetchExpenses },
-            { queryKey: ['categories'], queryFn: fetchCategories }
+            { queryKey: ['categories'], queryFn: fetchCategories },
+            { queryKey: ['subcategories'], queryFn: fetchSubcategories}
         ]
     });
 
-    if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
+    if (expensesQuery.isLoading || categoriesQuery.isLoading || subcategoriesQuery.isLoading) return <div>Loading...</div>;
     if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
     if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
+    if (subcategoriesQuery.isError) return <div>Categories Error: {(subcategoriesQuery.error as Error).message}</div>;
 
     const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
+    const subcategories = subcategoriesQuery.data as any[];
 
-    const uncategorized = expenses.filter((expense: any) => expense.category === null);
+    const uncategorized = expenses.filter((expense: any) => expense.subcategory === null);
 
     return (
         <div className="container">
@@ -78,8 +82,11 @@ function Categorize() {
                                 const matchedCategory = categoryMatch
                                     ? categories.find((c: any) => c.categoryName === categoryMatch.item)
                                     : categories.find((c: any) => c.categoryName.toLowerCase() === categoryInput.toLowerCase());
+                                    console.log('expenseId', expense.expenseId, 'matchedCategory:', matchedCategory);
                                 const subcategoryNames: string[] = matchedCategory
-                                    ? (matchedCategory.subcategories ?? []).map((s: any) => s.subcategoryName)
+                                    ? subcategories
+                                        .filter((s: any) => s.category?.categoryId === matchedCategory.categoryId)
+                                        .map((s: any) => s.subcategoryName)
                                     : [];
 
                                 const subcategoryInput = subcategoryInputs[expense.expenseId] ?? '';
