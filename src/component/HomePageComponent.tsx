@@ -1,32 +1,36 @@
 import '../css/HomePage.css';
 import { useQueries } from '@tanstack/react-query';
+import { useState } from 'react';
 import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
 import ChartComponent from './ChartComponent';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 // TODO make the charts filterable by month or YTD
 
 function HomePageComponent() {
+    const [date, setDate] = useState(null)
 
-const [expensesQuery, categoriesQuery] = useQueries({
-    queries: [
-        { queryKey: ['expenses'], queryFn: fetchExpenses },
-        { queryKey: ['categories'], queryFn: fetchCategories }
-    ]
-});
-
-
-if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
-if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
-if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
-
-// only access data after loading checks
-const expenses = expensesQuery.data;
-const categories = categoriesQuery.data;
-console.log(expenses);
+    const [expensesQuery, categoriesQuery] = useQueries({
+        queries: [
+            { queryKey: ['expenses'], queryFn: fetchExpenses },
+            { queryKey: ['categories'], queryFn: fetchCategories }
+        ]
+    });
 
 
-    const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0);
+    if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
+    if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
+    if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
+
+    // only access data after loading checks
+    const expenses = expensesQuery.data;
+    const categories = categoriesQuery.data;
+    console.log('expenses', expenses[0].date);
+
+
+    const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
 
 
 
@@ -35,8 +39,17 @@ console.log(expenses);
         <div className="container page-content">
             <div className="row h-100">
 
+
+
                 {/* EXPENSE TABLE */}
                 <div className="col expense-table pt d-flex flex-column">
+                    <DatePicker
+                        selected={date}
+                        onChange={(date) => setDate(date)}
+                        showMonthYearPicker
+                        dateFormat="MM/yyyy"
+                    />
+                    <button> Year to Date</button>
                     <table className="table mb-0 table-head">
                         <thead>
                             <tr>

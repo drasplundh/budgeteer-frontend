@@ -5,20 +5,14 @@ import { useState } from 'react'
 import { search } from 'fast-fuzzy';
 
 
-// ChatGPTed the shit outta this. Probably should look over how it works.
-
 function Categorize() {
 
-    // keep track of editing
     const [isEditing, setIsEditing] = useState(false);
-
     const [categoryInputs, setCategoryInputs] = useState<Record<number, string>>({})
-
+    const [subcategoryInputs, setSubcategoryInputs] = useState<Record<number, string>>({})
 
     const queryClient = useQueryClient();
 
-
-    // update func
     const { mutate: updateExpenseMutation } = useMutation({
         mutationFn: (updateCategoryRequest: { expenseId: number, categoryName: string, subcategoryName?: string }) =>
             updateExpense(updateCategoryRequest),
@@ -27,7 +21,6 @@ function Categorize() {
         }
     });
 
-    // expense/categories fetch
     const [expensesQuery, categoriesQuery] = useQueries({
         queries: [
             { queryKey: ['expenses'], queryFn: fetchExpenses },
@@ -35,27 +28,14 @@ function Categorize() {
         ]
     });
 
-    // some kind of check - look into this
     if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
     if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
     if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
 
-
-    // only access data after loading checks
     const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
-    console.log("expenses", expenses);
 
     const uncategorized = expenses.filter((expense: any) => expense.category === null);
-    console.log("uncategorized", uncategorized);
-
-
-
-
-
-
-
-
 
     return (
         <div className="container">
@@ -78,22 +58,43 @@ function Categorize() {
                     <table className='table table-body'>
                         <tbody>
                             {uncategorized.map((expense: any) => {
-                                                                const names = categories.map((c: any) => c.categoryName);
-                                const inputValue = categoryInputs[expense.expenseId] ?? '';
-const match = inputValue.length >= 3 
-    ? search(inputValue, names, { threshold: 0.4, returnMatchData: true })[0] as { item: string; original: string, score: number} | undefined
-    : undefined;
 
-const remaining = match?.item.toLowerCase().startsWith(inputValue.toLowerCase())
-    ? match.item.slice(inputValue.length)
-    : '';
+                                // --- Category fuzzy match ---
+                                const categoryNames = categories.map((c: any) => c.categoryName);
+                                const categoryInput = categoryInputs[expense.expenseId] ?? '';
+                                const categoryMatch = categoryInput.length >= 3
+                                    ? search(categoryInput, categoryNames, { threshold: 0.4, returnMatchData: true })[0] as { item: string; original: string, score: number } | undefined
+                                    : undefined;
+                                const categoryRemaining = categoryMatch?.item.toLowerCase().startsWith(categoryInput.toLowerCase())
+                                    ? categoryMatch.item.slice(categoryInput.length)
+                                    : '';
+                                const categoryDidYouMean = categoryMatch?.item && categoryMatch.item.toLowerCase() !== categoryInput.toLowerCase()
+                                    ? categoryMatch.item
+                                    : null;
 
-const didYouMean = match?.item && match.item.toLowerCase() !== inputValue.toLowerCase()
-    ? match.item
-    : null;
+                                // --- Subcategory fuzzy match ---
+                                // Use the fuzzy-matched category (if any) to source subcategories,
+                                // so the user doesn't need to fully confirm the category first
+                                const matchedCategory = categoryMatch
+                                    ? categories.find((c: any) => c.categoryName === categoryMatch.item)
+                                    : categories.find((c: any) => c.categoryName.toLowerCase() === categoryInput.toLowerCase());
+                                const subcategoryNames: string[] = matchedCategory
+                                    ? (matchedCategory.subcategories ?? []).map((s: any) => s.subcategoryName)
+                                    : [];
+
+                                const subcategoryInput = subcategoryInputs[expense.expenseId] ?? '';
+                                const subcategoryMatch = subcategoryInput.length >= 3 && subcategoryNames.length > 0
+                                    ? search(subcategoryInput, subcategoryNames, { threshold: 0.4, returnMatchData: true })[0] as { item: string; original: string, score: number } | undefined
+                                    : undefined;
+                                const subcategoryRemaining = subcategoryMatch?.item.toLowerCase().startsWith(subcategoryInput.toLowerCase())
+                                    ? subcategoryMatch.item.slice(subcategoryInput.length)
+                                    : '';
+                                const subcategoryDidYouMean = subcategoryMatch?.item && subcategoryMatch.item.toLowerCase() !== subcategoryInput.toLowerCase()
+                                    ? subcategoryMatch.item
+                                    : null;
+
                                 return (
                                     <tr key={expense.expenseId}>
-                                        {/* <td className="vendor-cell">{expense.vendor}</td> */}
                                         <td className="vendor-cell cell-l" data-bs-toggle="tooltip" title={expense.vendor}>
                                             {expense.vendor}
                                         </td>
@@ -101,6 +102,8 @@ const didYouMean = match?.item && match.item.toLowerCase() !== inputValue.toLowe
                                             {expense.cost}
                                         </td>
                                         <td className='cell-r'>{expense.date}</td>
+
+                                        {/* Category cell */}
                                         <td className="category-cell cell-r">
                                             {isEditing ? (
                                                 <div style={{ position: 'relative' }}>
@@ -115,59 +118,109 @@ const didYouMean = match?.item && match.item.toLowerCase() !== inputValue.toLowe
                                                             background: 'transparent'
                                                         }}
                                                     >
-                                                        {inputValue}
-                                                        {remaining}
+                                                        {categoryInput}{categoryRemaining}
                                                     </div>
-
                                                     <input
                                                         className='form-control'
-                                                        value={inputValue}
+                                                        value={categoryInput}
                                                         onChange={(e) => {
                                                             setCategoryInputs((prev) => ({
                                                                 ...prev, [expense.expenseId]: e.target.value
-
-                                                            }))
-                                                            console.log(inputValue);
-
+                                                            }));
+                                                            // Clear subcategory when category changes
+                                                            setSubcategoryInputs((prev) => ({
+                                                                ...prev, [expense.expenseId]: ''
+                                                            }));
                                                         }}
                                                         onKeyDown={(e) => {
-                                                            if (
-                                                                (e.key === 'Tab') && match
-                                                            ) {
+                                                            if (e.key === 'Tab' && categoryMatch) {
                                                                 e.preventDefault();
                                                                 setCategoryInputs((prev) => ({
                                                                     ...prev,
-                                                                    [expense.expenseId]: match.item
-                                                                }))
-                                                                return
+                                                                    [expense.expenseId]: categoryMatch.item
+                                                                }));
+                                                                return;
                                                             }
                                                             if (e.key === 'Enter') {
-                                                                if (didYouMean) {
-                                                                    const confirmed = window.confirm(`Did you mean "${didYouMean}"?`)
+                                                                if (categoryDidYouMean) {
+                                                                    const confirmed = window.confirm(`Did you mean "${categoryDidYouMean}"?`);
                                                                     updateExpenseMutation({
                                                                         expenseId: expense.expenseId,
-                                                                        categoryName: confirmed ? didYouMean : inputValue
+                                                                        categoryName: confirmed ? categoryDidYouMean : categoryInput
                                                                     });
                                                                     return;
                                                                 }
                                                                 updateExpenseMutation({
                                                                     expenseId: expense.expenseId,
-                                                                    categoryName: inputValue
+                                                                    categoryName: categoryInput
                                                                 });
                                                             }
                                                         }}
-                                                        style={{
-                                                            position: 'relative',
-                                                            background: 'transparent'
-                                                        }}
+                                                        style={{ position: 'relative', background: 'transparent' }}
                                                     />
                                                 </div>
                                             ) : (
                                                 expense.category?.categoryName ?? 'Uncategorized'
                                             )}
                                         </td>
+
+                                        {/* Subcategory cell */}
                                         <td className='cell-r'>
-                                            subcategories
+                                            {isEditing ? (
+                                                <div style={{ position: 'relative' }}>
+                                                    <div
+                                                        className="form-control"
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: 0,
+                                                            left: 0,
+                                                            color: '#aaa',
+                                                            pointerEvents: 'none',
+                                                            background: 'transparent'
+                                                        }}
+                                                    >
+                                                        {subcategoryInput}{subcategoryRemaining}
+                                                    </div>
+                                                    <input
+                                                        className='form-control'
+                                                        value={subcategoryInput}
+                                                        onChange={(e) => {
+                                                            setSubcategoryInputs((prev) => ({
+                                                                ...prev, [expense.expenseId]: e.target.value
+                                                            }));
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Tab' && subcategoryMatch) {
+                                                                e.preventDefault();
+                                                                setSubcategoryInputs((prev) => ({
+                                                                    ...prev,
+                                                                    [expense.expenseId]: subcategoryMatch.item
+                                                                }));
+                                                                return;
+                                                            }
+                                                            if (e.key === 'Enter') {
+                                                                if (subcategoryDidYouMean) {
+                                                                    const confirmed = window.confirm(`Did you mean "${subcategoryDidYouMean}"?`);
+                                                                    updateExpenseMutation({
+                                                                        expenseId: expense.expenseId,
+                                                                        categoryName: categoryInput,
+                                                                        subcategoryName: confirmed ? subcategoryDidYouMean : subcategoryInput
+                                                                    });
+                                                                    return;
+                                                                }
+                                                                updateExpenseMutation({
+                                                                    expenseId: expense.expenseId,
+                                                                    categoryName: categoryInput,
+                                                                    subcategoryName: subcategoryInput
+                                                                });
+                                                            }
+                                                        }}
+                                                        style={{ position: 'relative', background: 'transparent' }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                expense.subcategory?.subcategoryName ?? 'Uncategorized'
+                                            )}
                                         </td>
                                     </tr>
                                 );
@@ -178,7 +231,6 @@ const didYouMean = match?.item && match.item.toLowerCase() !== inputValue.toLowe
             </div>
         </div>
     )
-
 }
 
 export default Categorize;
