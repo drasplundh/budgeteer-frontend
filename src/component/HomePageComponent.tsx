@@ -3,6 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
 import ChartComponent from './ChartComponent';
+import { useState } from 'react';
 
 // TODO make the charts filterable by month or YTD
 
@@ -14,6 +15,13 @@ const [expensesQuery, categoriesQuery] = useQueries({
         { queryKey: ['categories'], queryFn: fetchCategories }
     ]
 });
+
+const [toggleCategories, setToggleCategories] = useState(false);
+function handleToggle() {
+    setToggleCategories(prev => !prev);
+}
+
+
 
 
 if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
@@ -74,9 +82,12 @@ console.log(expenses);
                     <div className='total-expense' style={{ flex: "0 0 10%" }}>
                         <h2>${totalCost}</h2>
                     </div>
+                    <button className="custom-btn" onClick={handleToggle}>
+                        {toggleCategories ? 'Categories' : 'Subcategories'}
+                    </button>
 
                     <div className='charts' style={{ flex: 1, minHeight: 0 }}>
-                        <ChartComponent />
+                        <ChartComponent showCategories={toggleCategories}/>
                     </div>
                 </div>
             </div>

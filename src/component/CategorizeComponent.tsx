@@ -46,7 +46,7 @@ function Categorize() {
     const categories = categoriesQuery.data;
     console.log("expenses", expenses);
 
-    const uncategorized = expenses.filter((expense: any) => expense.category === null);
+    const uncategorized = expenses.filter((expense: any) => expense.subcategory === null);
     console.log("uncategorized", uncategorized);
 
 
