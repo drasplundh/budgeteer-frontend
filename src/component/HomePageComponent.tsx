@@ -1,6 +1,5 @@
 import '../css/HomePage.css';
 import { useQueries } from '@tanstack/react-query';
-import { useState } from 'react';
 import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
 import ChartComponent from './ChartComponent';
