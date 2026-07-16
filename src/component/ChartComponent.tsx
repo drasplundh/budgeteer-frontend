@@ -1,17 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
 import { fetchSubcategories } from '../api/SubcategoryApi';
 import { useQueries } from '@tanstack/react-query';
+import { sub } from 'date-fns';
 
 Chart.register(...registerables);
 
 interface ChartComponentProps {
   showCategories: boolean;
+  showSubcategories: boolean;
+  expandCategory: any | null;
+  setExpandCategory: (category: any | null) => void;
 }
 
-function ChartComponent({showCategories}: ChartComponentProps) {
+function ChartComponent({showCategories, showSubcategories, expandCategory, setExpandCategory}: ChartComponentProps) {
   // all hooks must come first
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -23,17 +27,59 @@ function ChartComponent({showCategories}: ChartComponentProps) {
     ]
   });
 
+  const [expandCategoryColor, setExpandCategoryColor] = useState<string>('#e63946');
 
-  const isCategories = false;
-  const isSubcategories = true;
   let data: number[] = [];  
   let labels: string[] = [];
 
+
+  const isLoading = expensesQuery.isLoading || categoriesQuery.isLoading || subcategoriesQuery.isLoading;
+  const isError = expensesQuery.isError || categoriesQuery.isError || subcategoriesQuery.isError;
+
+  const expenses = expensesQuery.data;
+  const categories = categoriesQuery.data;
+  const subcategories = subcategoriesQuery.data;
+  const categoryColors = ['#ff0000', '#8cff00', , '#ff6f00', '#ffbb00', '#fff200', '#00d9ff', '#0022ff', '#6600ff', '#ff00f7']
+
+  if (!isLoading && !isError) {
+    if (expandCategory) {
+      <button>go back</button>
+      const relevantSubcategoires = subcategories.filter((sc : any) => sc.category.categoryName === expandCategory.categoryName);
+      data = relevantSubcategoires.map((sc : any) => {
+        return expenses
+        .filter((e: any) => e.subcategory?.subcategoryId === sc.subcategoryId)
+        .reduce((sum: number, e: any) => sum + e.cost, 0);
+      });
+      labels = relevantSubcategoires.map((subcat: any) => subcat.subcategoryName)
+      console.log('labels', labels);
+    } else if (showCategories) {
+      console.log('FIRED!!');
+      data = categories.map((category: any) =>
+        expenses
+          .filter((e: any) => e.subcategory?.category?.categoryId === category.categoryId)
+          .reduce((sum: number, e: any) => sum + e.cost, 0)
+      );
+      labels = categories.map((cat: any) => cat.categoryName);
+    } else if (showSubcategories) {
+      data = subcategories.map((subcategory: any) =>
+        expenses
+          .filter((e: any) => e.subcategory?.subcategoryId === subcategory.subcategoryId)
+          .reduce((sum: number, e: any) => sum + e.cost, 0)
+      );
+      labels = subcategories.map((subcat: any) => subcat.subcategoryName);
+    }
+  }
+
+  
+
+
   useEffect(() => {
-     if (!canvasRef.current || !categories || !expenses || !subcategories) return; // guard here
+    if (!canvasRef.current || !categories || !expenses || !subcategories) return; // guard here
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
+
+    const backgroundColors = expandCategory ? generateShades(expandCategoryColor, data.length) : categoryColors.slice(0, data.length);
     const myChart = new Chart(ctx, {
       type: 'pie',
       data: {
@@ -42,13 +88,29 @@ function ChartComponent({showCategories}: ChartComponentProps) {
           {
             label: 'Amount Spent',
             data: data,
-            backgroundColor: ['red', 'blue', 'yellow', 'green', 'purple', 
-              'orange', 'white', 'brown', 'black', '#5ae6e8',
-            '#ffd35c'],
+            backgroundColor: backgroundColors
           },
         ],
       },
       options: {
+        onClick: (event, elements) => {
+          // reset view if clicked away
+          if (elements.length === 0) {
+            if (expandCategory) {
+              setExpandCategory(null);
+            }
+              return;
+
+          }
+          const index = elements[0].index;
+          const clickedCategory = categories[index];
+          const clickedColor = categoryColors[index];
+
+          if (!expandCategory) {
+            setExpandCategory(clickedCategory);
+            setExpandCategoryColor(clickedColor);
+          }
+        },
         scales: {
           y: { beginAtZero: true }
         }
@@ -57,7 +119,7 @@ function ChartComponent({showCategories}: ChartComponentProps) {
     return () => {
       myChart.destroy();
     };
-  }, [data, labels]);
+  }, [data, labels, expandCategory, showCategories]);
 
   // early returns after all hooks
   if (expensesQuery.isLoading || categoriesQuery.isLoading || subcategoriesQuery.isLoading) return <div>Loading...</div>;
@@ -65,29 +127,28 @@ function ChartComponent({showCategories}: ChartComponentProps) {
   if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
 
 
-  const expenses = expensesQuery.data;
-  const categories = categoriesQuery.data;
-  const subcategories = subcategoriesQuery.data;
+// helper function to generate shades of the pie slice
+function generateShades(hexColor: string, count: number): string[] {
+  // Convert hex to RGB
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
 
-  // toggle passed from homepage component
-  if (showCategories) {
-    data = categories.map((category: any) => {
-      return expenses
-      .filter((e: any) => e.subcategory?.category?.categoryId === category.categoryId)
-      .reduce((sum: number, e: any) => sum + e.cost, 0);
-    })
-    labels = categories.map((cat: any) => cat.categoryName)
-  } else {
-    data = subcategories.map((subcategory: any) => {
-      return expenses
-      .filter((e: any) => e.subcategory?.subcategoryId === subcategory.subcategoryId)
-      .reduce((sum: number, e: any) => sum + e.cost, 0);  
-    })
-    labels = subcategories.map((subcat: any) => subcat.subcategoryName)
+  const shades: string[] = [];
+  for (let i = 0; i < count; i++) {
+    // Spread shades from darker to lighter across the count
+    const factor = 0.4 + (i / Math.max(count - 1, 1)) * 0.6; // ranges ~0.4 to 1.0
+    const newR = Math.min(255, Math.round(r * factor + 255 * (1 - factor) * 0.3));
+    const newG = Math.min(255, Math.round(g * factor + 255 * (1 - factor) * 0.3));
+    const newB = Math.min(255, Math.round(b * factor + 255 * (1 - factor) * 0.3));
+    shades.push(`rgb(${newR}, ${newG}, ${newB})`);
   }
+  return shades;
+}
 
-
-  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+  );
 }
 
 export default ChartComponent;

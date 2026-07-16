@@ -5,12 +5,24 @@
   background-color: #FCFAFA;
 }
 
+.center {
+  justify-content: center;
+}
+
 .pt {
   padding-top: 16px;
 }
 
 th {
   max-width: 75px;
+}
+
+.custom-btn {
+  background-color:  #b6b8c2;
+}
+
+.custom-btn:hover { 
+  background-color: #a3a7bf;
 }
 
 .vendor-cell {
@@ -54,6 +66,14 @@ td.expensive {
 }
 
 .charts {
+  background-color: #C8D3D5;
+}
+
+.selector-buttons {
+  background-color: #C8D3D5;
+}
+
+.charts-col{ 
   background-color: #C8D3D5;
 }
 

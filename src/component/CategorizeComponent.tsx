@@ -82,7 +82,6 @@ function Categorize() {
                                 const matchedCategory = categoryMatch
                                     ? categories.find((c: any) => c.categoryName === categoryMatch.item)
                                     : categories.find((c: any) => c.categoryName.toLowerCase() === categoryInput.toLowerCase());
-                                    console.log('expenseId', expense.expenseId, 'matchedCategory:', matchedCategory);
                                 const subcategoryNames: string[] = matchedCategory
                                     ? subcategories
                                         .filter((s: any) => s.category?.categoryId === matchedCategory.categoryId)
