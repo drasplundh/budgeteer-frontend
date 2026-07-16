@@ -5,7 +5,7 @@ import { fetchCategories } from '../api/CategoryApi';
 import ChartComponent from './ChartComponent';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 // TODO make the charts filterable by month or YTD
 
@@ -22,8 +22,10 @@ function HomePageComponent() {
     const [viewCategories, setViewCategories] = useState(false);
     const [viewSubcategories, setViewSubcategories] = useState(false);
     const [expandCategory, setExpandCategory] = useState<any | null>(null);
-    const [startDate, setStartDate] = useState<string>(null);
-    const [endDate, setEndDate] = useState<string>(null);
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const startDateInput = useRef<HTMLInputElement>(null);
+    const endDateInput = useRef<HTMLInputElement>(null);
 
     function handleSubcategories() {
         setViewSubcategories(true);
@@ -35,6 +37,20 @@ function HomePageComponent() {
         setViewCategories(true);
     }
 
+    function handleDateFilter() {
+        setStartDate(startDateInput.current?.value || null);
+        setEndDate(endDateInput.current?.value || null);
+        console.log('start', startDate);
+        console.log('end', endDate);
+        
+    }
+
+    function resetDateFilter() {
+        // setStartDateInput('');
+        // setEndDateInput('');
+        // setStartDate(null);
+        // setEndDate(null);
+    }
 
 
 
@@ -50,12 +66,6 @@ function HomePageComponent() {
 
     const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
 
-    if (startDate && endDate) {
-        console.log('start', startDate);
-        console.log('end', endDate);
-    }
-
-
 
 
     return (
@@ -68,14 +78,14 @@ function HomePageComponent() {
                 <div className="col expense-table pt d-flex flex-column">
                     <div className="row mb-2">
                         <div className='col-6 d-flex gap-2'>
-                            <input className="form-control" type='text' placeholder='yyyy-mm-dd' value={startDate} onChange={(e) => setStartDate(e.target.value)}/>
-                            <input className="form-control" type='text' placeholder='yyyy-mm-dd' value={endDate} onChange={(e) => setEndDate(e.target.value)}/>
-                            <button className='btn custom-btn'>Enter</button>
+                            <input className="form-control" type='text' placeholder='yyyy-mm-dd' ref={startDateInput}/>
+                            <input className="form-control" type='text' placeholder='yyyy-mm-dd' ref={endDateInput}/>
+                            <button className='btn custom-btn' onClick={handleDateFilter}>Enter</button>
                         </div>
                         <div className='col-3 d-flex center'>
-                            <button className='btn custom-btn'>Reset</button>
+                            <button className='btn custom-btn' onClick={resetDateFilter}>Reset</button>
                         </div>
-                        <div className='col-3 d-flex '>
+                        <div className='col-3 d-flex'>
                             <button className='btn custom-btn'>Year to Date</button>
                         </div>
                     </div>
@@ -144,7 +154,7 @@ function HomePageComponent() {
 
 
                     <div className='charts' style={{ flex: 1, minHeight: 0 }}>
-                        <ChartComponent setExpandCategory={setExpandCategory} expandCategory={expandCategory} showCategories={viewCategories} showSubcategories={viewSubcategories} />
+                        <ChartComponent dateFilterStartDate={startDate} dateFilterEndDate={endDate} setExpandCategory={setExpandCategory} expandCategory={expandCategory} showCategories={viewCategories} showSubcategories={viewSubcategories} />
                     </div>
                 </div>
             </div>

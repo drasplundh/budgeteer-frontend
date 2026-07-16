@@ -9,13 +9,15 @@ import { sub } from 'date-fns';
 Chart.register(...registerables);
 
 interface ChartComponentProps {
+  dateFilterStartDate: string | null;
+  dateFilterEndDate: string | null;
   showCategories: boolean;
   showSubcategories: boolean;
   expandCategory: any | null;
   setExpandCategory: (category: any | null) => void;
 }
 
-function ChartComponent({showCategories, showSubcategories, expandCategory, setExpandCategory}: ChartComponentProps) {
+function ChartComponent({dateFilterStartDate, dateFilterEndDate, showCategories, showSubcategories, expandCategory, setExpandCategory}: ChartComponentProps) {
   // all hooks must come first
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -31,6 +33,7 @@ function ChartComponent({showCategories, showSubcategories, expandCategory, setE
 
   let data: number[] = [];  
   let labels: string[] = [];
+  let filteredExpenses;
 
 
   const isLoading = expensesQuery.isLoading || categoriesQuery.isLoading || subcategoriesQuery.isLoading;
@@ -51,9 +54,7 @@ function ChartComponent({showCategories, showSubcategories, expandCategory, setE
         .reduce((sum: number, e: any) => sum + e.cost, 0);
       });
       labels = relevantSubcategoires.map((subcat: any) => subcat.subcategoryName)
-      console.log('labels', labels);
     } else if (showCategories) {
-      console.log('FIRED!!');
       data = categories.map((category: any) =>
         expenses
           .filter((e: any) => e.subcategory?.category?.categoryId === category.categoryId)
@@ -69,6 +70,17 @@ function ChartComponent({showCategories, showSubcategories, expandCategory, setE
       labels = subcategories.map((subcat: any) => subcat.subcategoryName);
     }
   }
+
+if (dateFilterStartDate && dateFilterEndDate) {
+  filteredExpenses = expenses.filter((expense: any) => {
+    return expense.date >= dateFilterStartDate && expense.date <= dateFilterEndDate;
+  });
+  console.log('filtered expenses', filteredExpenses); // moved outside the callback
+}
+
+if (filteredExpenses) {
+  
+}
 
   
 
