@@ -102,7 +102,7 @@ function HomePageComponent() {
                                 <th className='cell-l'>Vendor</th>
                                 <th className='cell-r'>Cost</th>
                                 <th className='cell-r'>Date</th>
-                                <th className='cell-r'>Category</th>
+                                {/* <th className='cell-r'>Category</th> */}
                             </tr>
                         </thead>
                     </table>
@@ -120,7 +120,7 @@ function HomePageComponent() {
                                         </td>
                                         {/* <td>{expense.cost}</td> */}
                                         <td className='cell-r'>{expense.date}</td>
-                                        <td className='cell-r'>{expense.category?.categoryName ?? "no category"}</td>
+                                        {/* <td className='cell-r'>{expense.category?.categoryName ?? "no category"}</td> */}
                                     </tr>
                                 ))}
                             </tbody>

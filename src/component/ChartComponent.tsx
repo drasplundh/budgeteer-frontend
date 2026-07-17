@@ -35,6 +35,21 @@ function ChartComponent({dateFilterStartDate, dateFilterEndDate, showCategories,
   let labels: string[] = [];
   let filteredExpenses;
 
+  // helper function to build chart data
+  function buildChartData(items: any[], getTotal: (item: any) => number, getLabel: (item: any) => string ) {
+    const paired = items.map((item) => ({
+      label: getLabel(item),
+      total: getTotal(item),
+    }));
+
+    const nonZero = paired.filter((p) => p.total > 0);
+
+    return {
+      data: nonZero.map((p) => p.total),
+      labels: nonZero.map((p) => p.label),
+    };
+  }
+
 
   const isLoading = expensesQuery.isLoading || categoriesQuery.isLoading || subcategoriesQuery.isLoading;
   const isError = expensesQuery.isError || categoriesQuery.isError || subcategoriesQuery.isError;
@@ -46,28 +61,36 @@ function ChartComponent({dateFilterStartDate, dateFilterEndDate, showCategories,
 
   if (!isLoading && !isError) {
     if (expandCategory) {
-      <button>go back</button>
       const relevantSubcategoires = subcategories.filter((sc : any) => sc.category.categoryName === expandCategory.categoryName);
-      data = relevantSubcategoires.map((sc : any) => {
-        return expenses
+      const result = buildChartData(
+        relevantSubcategoires,
+        (sc) => (filteredExpenses ?? expenses)
         .filter((e: any) => e.subcategory?.subcategoryId === sc.subcategoryId)
-        .reduce((sum: number, e: any) => sum + e.cost, 0);
-      });
-      labels = relevantSubcategoires.map((subcat: any) => subcat.subcategoryName)
+        .reduce((sum: number, e: any) => sum + e.cost, 0),
+        (sc) => sc.subcategoryName
+      );
+      data = result.data;
+      labels = result.labels;
     } else if (showCategories) {
-      data = categories.map((category: any) =>
-        expenses
-          .filter((e: any) => e.subcategory?.category?.categoryId === category.categoryId)
-          .reduce((sum: number, e: any) => sum + e.cost, 0)
+      const result = buildChartData(
+        categories,
+         (c) => expenses
+         .filter((e: any) => e.subcategory?.category?.categoryId === c.categoryId)
+         .reduce((sum: number, e: any) => sum + e.cost, 0),
+         (c) => c.categoryName
       );
-      labels = categories.map((cat: any) => cat.categoryName);
+      data = result.data;
+      labels = result.labels;
     } else if (showSubcategories) {
-      data = subcategories.map((subcategory: any) =>
-        expenses
-          .filter((e: any) => e.subcategory?.subcategoryId === subcategory.subcategoryId)
-          .reduce((sum: number, e: any) => sum + e.cost, 0)
+      const result = buildChartData(
+        subcategories,
+        (sc) => expenses
+        .filter((e: any) => e.subcategory?.subcategoryId === sc.subcategoryId)
+        .reduce((sum: number, e: any) => sum + e.cost, 0),
+        (sc) => sc.subcategoryName
       );
-      labels = subcategories.map((subcat: any) => subcat.subcategoryName);
+      data = result.data;
+      labels = result.labels;
     }
   }
 
@@ -79,7 +102,12 @@ if (dateFilterStartDate && dateFilterEndDate) {
 }
 
 if (filteredExpenses) {
-  
+      data = categories.map((category: any) =>
+        filteredExpenses
+          .filter((e: any) => e.subcategory?.category?.categoryId === category.categoryId)
+          .reduce((sum: number, e: any) => sum + e.cost, 0)
+      );
+      labels = categories.map((cat: any) => cat.categoryName);
 }
 
   
