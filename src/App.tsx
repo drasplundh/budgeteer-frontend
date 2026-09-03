@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NavBar from './component/NavBarComponent';
 import HomePage from './component/HomePageComponent';
 import Categorize from './component/CategorizeComponent';
-import ManualEntry from './component/ManualEntryComponent';
+import ManualEntry from './component/ManualEntry/ManualEntryComponent';
 
 function App() {
   return (

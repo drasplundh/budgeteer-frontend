@@ -1,0 +1,10 @@
+.toast {
+    background-color: #35f063;
+    font-weight: bold;
+    border-radius: 5px;
+    color: #2a2e2c;
+}
+
+.toast-body {
+    justify-content: center;
+}

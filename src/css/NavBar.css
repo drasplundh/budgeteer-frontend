@@ -29,3 +29,12 @@
 .notification:hover {
     background-color: #E85F5C;
 }
+
+.hover {
+    transition: background-color 0.3s ease, border-radius 0.3s ease;
+}
+
+.hover:hover {
+    background-color: #a3a7bf;
+    border-radius: 10px;
+}

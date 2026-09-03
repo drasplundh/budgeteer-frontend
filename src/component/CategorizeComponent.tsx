@@ -4,6 +4,7 @@ import { fetchCategories } from "../api/CategoryApi";
 import { fetchSubcategories } from '../api/SubcategoryApi';
 import { useState } from 'react'
 import { search } from 'fast-fuzzy';
+import { dateFormat } from '../util/DateFormatter';
 
 
 function Categorize() {
@@ -37,6 +38,7 @@ function Categorize() {
 
     const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
+    console.log("categories", categories);
     const subcategories = subcategoriesQuery.data as any[];
 
     const uncategorized = expenses.filter((expense: any) => expense.subcategory === null);
@@ -65,6 +67,7 @@ function Categorize() {
 
                                 // --- Category fuzzy match ---
                                 const categoryNames = categories.map((c: any) => c.categoryName);
+                                console.log("categoryNames", categoryNames);
                                 const categoryInput = categoryInputs[expense.expenseId] ?? '';
                                 const categoryMatch = categoryInput.length >= 3
                                     ? search(categoryInput, categoryNames, { threshold: 0.4, returnMatchData: true })[0] as { item: string; original: string, score: number } | undefined
@@ -107,7 +110,7 @@ function Categorize() {
                                         <td className={expense.cost > 200 ? 'expensive cell-r' : 'cell-r'}>
                                             {expense.cost}
                                         </td>
-                                        <td className='cell-r'>{expense.date}</td>
+                                        <td className='cell-r'>{dateFormat(expense.date)}</td>
 
                                         {/* Category cell */}
                                         <td className="category-cell cell-r">

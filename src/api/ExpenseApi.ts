@@ -21,4 +21,21 @@ export const updateExpense = async (updateCategoryRequest: {
     return data;
 };
 
+export const createExpense = async (createExpenseRequest: {
+    vendor: string,
+    cost: number,
+    date: string
+    category: string,
+    subcategory: string,
+}) => {
+    const { data } = await api.post("/expense/create-expense", {
+        vendor: createExpenseRequest.vendor,
+        cost: createExpenseRequest.cost,
+        date: createExpenseRequest.date,
+        category: createExpenseRequest.category,
+        subcategory: createExpenseRequest.subcategory,
+    });
+    return data;
+}
+
 export {}

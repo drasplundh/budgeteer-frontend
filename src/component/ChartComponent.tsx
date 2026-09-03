@@ -1,14 +1,18 @@
+//TODO nix the all subcategories button, just click the pie slice for the granularity
+
 import { useEffect, useRef, useState } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
 import { fetchSubcategories } from '../api/SubcategoryApi';
+import { fetchIncome } from '../api/IncomeApi';
 import { useQueries } from '@tanstack/react-query';
 import { sub } from 'date-fns';
 
 Chart.register(...registerables);
 
 interface ChartComponentProps {
+  isIncome: boolean;
   dateFilterStartDate: string | null;
   dateFilterEndDate: string | null;
   showCategories: boolean;
@@ -17,15 +21,16 @@ interface ChartComponentProps {
   setExpandCategory: (category: any | null) => void;
 }
 
-function ChartComponent({dateFilterStartDate, dateFilterEndDate, showCategories, showSubcategories, expandCategory, setExpandCategory}: ChartComponentProps) {
+function ChartComponent({isIncome, dateFilterStartDate, dateFilterEndDate, showCategories, showSubcategories, expandCategory, setExpandCategory}: ChartComponentProps) {
   // all hooks must come first
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [expensesQuery, categoriesQuery, subcategoriesQuery] = useQueries({
+  const [expensesQuery, categoriesQuery, subcategoriesQuery, incomeQuery] = useQueries({
     queries: [
       { queryKey: ['expenses'], queryFn: fetchExpenses },
       { queryKey: ['categories'], queryFn: fetchCategories },
-      { queryKey: ['subcategories'], queryFn: fetchSubcategories }
+      { queryKey: ['subcategories'], queryFn: fetchSubcategories },
+      { queryKey: ['income'], queryFn: fetchIncome }
     ]
   });
 
@@ -34,6 +39,7 @@ function ChartComponent({dateFilterStartDate, dateFilterEndDate, showCategories,
   let data: number[] = [];  
   let labels: string[] = [];
   let filteredExpenses;
+  let filteredIncome;
 
   // helper function to build chart data
   function buildChartData(items: any[], getTotal: (item: any) => number, getLabel: (item: any) => string ) {
@@ -54,45 +60,119 @@ function ChartComponent({dateFilterStartDate, dateFilterEndDate, showCategories,
   const isLoading = expensesQuery.isLoading || categoriesQuery.isLoading || subcategoriesQuery.isLoading;
   const isError = expensesQuery.isError || categoriesQuery.isError || subcategoriesQuery.isError;
 
+  const income = incomeQuery.data;
   const expenses = expensesQuery.data;
   const categories = categoriesQuery.data;
   const subcategories = subcategoriesQuery.data;
   const categoryColors = ['#ff0000', '#8cff00', , '#ff6f00', '#ffbb00', '#fff200', '#00d9ff', '#0022ff', '#6600ff', '#ff00f7']
 
+// expense block
   if (!isLoading && !isError) {
-    if (expandCategory) {
-      const relevantSubcategoires = subcategories.filter((sc : any) => sc.category.categoryName === expandCategory.categoryName);
+    if (expandCategory && !isIncome) {
+      console.log("clicked category", expandCategory);
+      const relevantSubcategories = subcategories.filter((sc : any) => sc.category.categoryName === expandCategory.categoryName);
       const result = buildChartData(
-        relevantSubcategoires,
+        relevantSubcategories,
         (sc) => (filteredExpenses ?? expenses)
         .filter((e: any) => e.subcategory?.subcategoryId === sc.subcategoryId)
         .reduce((sum: number, e: any) => sum + e.cost, 0),
         (sc) => sc.subcategoryName
       );
+      console.log("filteredExpenses", filteredExpenses);
+      console.log("relevantSubcategories", relevantSubcategories)
       data = result.data;
       labels = result.labels;
-    } else if (showCategories) {
+    } else if (expandCategory && isIncome) { // piechart selection not working for income
+      console.log("clicked category", expandCategory);
+      const relevantSubcategories = subcategories.filter((sc : any) => sc.category.categoryName === expandCategory.categoryName);
       const result = buildChartData(
-        categories,
-         (c) => expenses
-         .filter((e: any) => e.subcategory?.category?.categoryId === c.categoryId)
-         .reduce((sum: number, e: any) => sum + e.cost, 0),
-         (c) => c.categoryName
-      );
-      data = result.data;
-      labels = result.labels;
-    } else if (showSubcategories) {
-      const result = buildChartData(
-        subcategories,
-        (sc) => expenses
-        .filter((e: any) => e.subcategory?.subcategoryId === sc.subcategoryId)
-        .reduce((sum: number, e: any) => sum + e.cost, 0),
+        relevantSubcategories,
+        (sc) => (filteredIncome ?? income)
+        .filter((i: any) => i.subcategory?.subcategoryId === sc.subcategoryId)
+        .reduce((sum: number, i: any) => sum + i.amount, 0),
         (sc) => sc.subcategoryName
       );
+      console.log("relevant income subcategories", relevantSubcategories);
       data = result.data;
       labels = result.labels;
+    } else if (!expandCategory && !isIncome) {
+      console.log("!expandCategory && !isIncome");
+      const result = buildChartData(
+        categories,
+        (c) => (filteredExpenses ?? expenses)
+        .filter((e: any) => e.subcategory?.category?.categoryId === c.categoryId)
+        .reduce((sum: number, e: any) => sum + e.cost, 0),
+        (c) => c.categoryName
+      );
+      data = result.data;
+      labels = result.labels;
+    } else if (!expandCategory && isIncome) {
+      console.log("!expandCategory && isIncome)")
+      console.log('income', income);
+      const result = buildChartData(
+        categories,
+        (c) => (filteredIncome ?? income)
+        .filter((i: any) => i.subcategory?.category?.categoryId === c.categoryId)
+        .reduce((sum: number, i: any) => sum + i.amount, 0),
+        (c) => c.categoryName
+      );
+      data = result.data;
+      console.log('data', data);
+      labels = result.labels;
     }
+    //   else if (showCategories) {
+    //   const result = buildChartData(
+    //     categories,
+    //      (c) => expenses
+    //      .filter((e: any) => e.subcategory?.category?.categoryId === c.categoryId)
+    //      .reduce((sum: number, e: any) => sum + e.cost, 0),
+    //      (c) => c.categoryName
+    //   );
+    //   data = result.data;
+    //   labels = result.labels;
+    // } else if (showSubcategories) {
+    //   const result = buildChartData(
+    //     subcategories,
+    //     (sc) => expenses
+    //     .filter((e: any) => e.subcategory?.subcategoryId === sc.subcategoryId)
+    //     .reduce((sum: number, e: any) => sum + e.cost, 0),
+    //     (sc) => sc.subcategoryName
+    //   );
+    //   data = result.data;
+    //   labels = result.labels;
+    // }
   }
+
+    // function buildChartData(items: any[], getTotal: (item: any) => number, getLabel: (item: any) => string ) {
+    // const paired = items.map((item) => ({
+    //   label: getLabel(item),
+    //   total: getTotal(item),
+    // }));
+
+// if (isIncome) {
+//   const result = buildChartData(
+//     categories,
+//     (c: any) =>
+//       income
+//         .filter((inc: any) => inc.subcategory?.category?.categoryId === c.categoryId)
+//         .reduce((sum: number, inc: any) => sum + inc.amount, 0),
+//     (c: any) => c.categoryName
+//   );
+//   data = result.data;
+//   labels = result.labels;
+//   console.log('income from chart', income);
+// } else {
+//   const result = buildChartData(
+//     categories,
+//     (c: any) =>
+//       expenses
+//       .filter((e: any) => e.subcategory?.category?.categoryId === c.categoryId)
+//       .reduce((sum: number, e: any) => sum + e.cost, 0),
+//     (c: any) => c.categoryName
+//   );
+//     data = result.data;
+//     labels = result.labels;
+// }
 
 if (dateFilterStartDate && dateFilterEndDate) {
   filteredExpenses = expenses.filter((expense: any) => {
@@ -151,9 +231,6 @@ if (filteredExpenses) {
             setExpandCategoryColor(clickedColor);
           }
         },
-        scales: {
-          y: { beginAtZero: true }
-        }
       },
     });
     return () => {

@@ -21,6 +21,10 @@ th {
   background-color:  #b6b8c2;
 }
 
+.btn-selected {
+  background-color: #a57fb3;
+}
+
 .custom-btn:hover { 
   background-color: #a3a7bf;
 }
@@ -46,9 +50,9 @@ th {
   text-align: right;
 }
 
-/* .vendor-cell:hover {
-  color: blue;
-} */
+.control-container {
+  background-color: #C8D3D5;
+}
 
 .col .total-expense .charts {
  padding-left: 0px;
@@ -74,7 +78,7 @@ td.expensive {
 }
 
 .charts-col{ 
-  background-color: #C8D3D5;
+  /* background-color: red; */
 }
 
 .expense-table {
@@ -89,4 +93,35 @@ td.expensive {
 
 .expense-chart {
   background-color: #C8D3D5;
+}
+
+.neg {
+  color: red;
+}
+
+.pos {
+  color: green;
+}
+
+.scroll-pane-container {
+    height: 100%;
+    background-color: #C8D3D5;
+}
+
+.date-range-header {
+  height: 15%;
+}
+.scroll-pane-header {
+  /* background-color: #C8D3D5; */
+}
+
+.transaction-scroll-pane {
+
+  /* background-color: #C8D3D5; */
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }

@@ -34,10 +34,10 @@ function NavBar() {
                     {/* <h2 onClick>Categorize</h2> */}
                 </div>
 
-                <div className='col center right d-flex'>
+                <div className='col hover center right d-flex'>
                     <h3 onClick={() => navigate('/manual-entry')}>Manual Entry</h3>
                 </div>
-                <div className='col center left d-flex'>
+                <div className='col hover center left d-flex'>
                     <h3 onClick={() => navigate('/categorize')}>Categorize</h3>
                 </div>
             </div>

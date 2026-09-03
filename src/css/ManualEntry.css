@@ -1,4 +1,15 @@
 .container.small-container {
     width: 25%;
-    background-color: #C8D3D5
+}
+
+.form-container {
+    background-color: #C8D3D5;
+}
+
+.form-selector {
+    background-color: #C8D3D5;
+}
+
+.btn-selected {
+  background-color: #a57fb3;
 }
