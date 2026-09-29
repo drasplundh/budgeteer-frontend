@@ -223,11 +223,12 @@ if (filteredExpenses) {
 
           }
           const index = elements[0].index;
-          const clickedCategory = categories[index];
+          const categoryLabel = myChart.data.labels[index];
+          const selectedCategory = categories.find((c) => c.categoryName === categoryLabel);
           const clickedColor = categoryColors[index];
 
           if (!expandCategory) {
-            setExpandCategory(clickedCategory);
+            setExpandCategory(selectedCategory);
             setExpandCategoryColor(clickedColor);
           }
         },

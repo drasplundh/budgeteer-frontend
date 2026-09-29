@@ -6,11 +6,11 @@ import { fetchIncome } from '../api/IncomeApi';
 import ChartComponent from './ChartComponent';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import TransactionCard from './TransactionCard';
 import { IIncome } from '../model/Income';
 import { IExpense } from '../model/Expense';
-import { dateToIso } from '../util/DateFormatter';
+import { dateToIso, shortDateFormat } from '../util/DateFormatter';
 
 // TODO make the charts filterable by month or YTD
 
@@ -34,6 +34,19 @@ function HomePageComponent() {
     const startDateInput = useRef<HTMLInputElement>(null);
     const endDateInput = useRef<HTMLInputElement>(null);
     const [isIncome, setIsIncome] = useState<boolean>(false);
+    // const [dateFilteredExpenses, setDateFilteredExpenses] = useState<Array<IExpense>>([]);
+    const [totalCost, setTotalCost] = useState<number>(0);
+    const [totalIncome, setTotalIncome] = useState<number>(0);
+
+  const expenses = expensesQuery.data ?? [];
+
+    const dateFilteredExpenses = useMemo(() => {
+        return expenses.filter((e) => e.date >= startDate && e.date <= endDate)
+    }, [expenses, startDate, endDate]);
+
+
+
+
 
     function handleSubcategories() {
         setViewSubcategories(true);
@@ -47,13 +60,23 @@ function HomePageComponent() {
         setSelected('categories');
     }
 
+    function resetExpandCategory() {
+        setExpandCategory(null);
+    }
+
     function handleDateFilter() {
         let startDateString = dateToIso(startDateInput.current?.value);
         let endDateString = dateToIso(endDateInput.current?.value);
+        let dateFilteredExpenses = expenses.filter((e) => e.date >= startDateString && e.date <= endDateString);
+        let dateFilteredIncome = income.filter((i) => i.date >= startDateString && i.date <= endDateString);
+        let calculatedTotalCost = dateFilteredExpenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
+        let calculatedTotalIncome = dateFilteredIncome.reduce((sum: Number, income: any) => sum + income.amount, 0).toFixed(2);
+        console.log("calculated Income:", calculatedTotalIncome);
+        console.log("dateFilteredIncome:", dateFilteredIncome);
+        setTotalCost(calculatedTotalCost);
+        setTotalIncome(calculatedTotalIncome);
         setStartDate(startDateString || null);
         setEndDate(endDateString || null);
-        console.log('start', startDate);
-        console.log('end', endDate);
     }
 
     function resetDateFilter() {
@@ -99,15 +122,16 @@ function HomePageComponent() {
     if (incomeQuery.isError) return <div>Income Error: {(incomeQuery.error as Error).message}</div>;
 
     // only access data after loading checks
-    const expenses = expensesQuery.data;
+    // const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
     const income = incomeQuery.data;
     console.log('expenses', expenses);
     console.log('income', income);
 
 
-    const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
-    const totalIncome = income.reduce((sum: number, income: any) => sum + income.amount, 0).toFixed(2);
+    // const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
+    // const totalIncome = income.reduce((sum: number, income: any) => sum + income.amount, 0).toFixed(2);
+    // var diff = totalIncome - totalCost;
 
 
 
@@ -125,7 +149,7 @@ function HomePageComponent() {
                                 <TransactionCard key={income.incomeId} transaction={income} />
                             ))
                             :
-                            expenses.map((expense: IExpense) => (
+                            dateFilteredExpenses.map((expense: IExpense) => (
                                 <TransactionCard key={expense.expenseId} transaction={expense} />
                             ))
                         }
@@ -152,10 +176,10 @@ function HomePageComponent() {
                 <div className="col-3 control-container d-flex flex-column">
                     <div className='date-range-header d-flex center'>
                         {startDate && endDate ? (
-                            <p>{startDate} {endDate}</p>
-                        ):(
-                        <h3>Year-to-date</h3>
-                            
+                            <p>{shortDateFormat(startDate)} - {shortDateFormat(endDate)}</p>
+                        ) : (
+                            <h3>Year-to-date</h3>
+
                         )}
                     </div>
                     <div className='d-flex center'>
@@ -171,6 +195,7 @@ function HomePageComponent() {
                             </div>
                         )}
                     </div>
+                    {/* <div className='d-flex center'>Diff: ${diff}</div> */}
                     <div className='d-flex center'>
                         <button className='btn custom-btn' onClick={handleIsIncome}>{isIncome === true ? "View Expenses" : "View Income"}</button>
                     </div>
@@ -206,6 +231,9 @@ function HomePageComponent() {
                                 <option value="1">Alice</option>
                                 <option value="2">Bob</option>
                             </select>
+                        </div>
+                        <div>
+                            {expandCategory && <button className='btn custom-btn' onClick={resetExpandCategory}>Back</button>}
                         </div>
                     </div>
                 </div>
