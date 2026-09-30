@@ -8,6 +8,7 @@ interface TransactionCardProps {
 }
 
 function TransactionCard({ transaction }: TransactionCardProps) {
+    if (Array.isArray(transaction)) console.trace('got an array!');
 
     return (
         <div className="transaction-card">

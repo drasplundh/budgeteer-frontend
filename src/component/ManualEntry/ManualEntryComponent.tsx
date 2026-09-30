@@ -109,14 +109,12 @@ const [showToast, setShowToast] = useState(false);
                     {selected === 'expense' ? (
                     <ExpenseForm
                         onSubmit={(data) => {
-                            console.log(data);
                         createExpenseMutation(data);
                         }}
                     />
                     ) : (
                     <IncomeForm
                         onSubmit={(data) => {
-                        console.log('new income', data);
                         createIncomeMutation(data);
                         }}
                     />

@@ -4,7 +4,6 @@ import { fetchExpenses } from '../api/ExpenseApi';
 import { fetchCategories } from '../api/CategoryApi';
 import { fetchIncome } from '../api/IncomeApi';
 import ChartComponent from './ChartComponent';
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useState, useRef, useMemo } from 'react';
 import TransactionCard from './TransactionCard';
@@ -12,7 +11,6 @@ import { IIncome } from '../model/Income';
 import { IExpense } from '../model/Expense';
 import { dateToIso, shortDateFormat } from '../util/DateFormatter';
 
-// TODO make the charts filterable by month or YTD
 
 function HomePageComponent() {
     const [date, setDate] = useState(null)
@@ -35,14 +33,25 @@ function HomePageComponent() {
     const endDateInput = useRef<HTMLInputElement>(null);
     const [isIncome, setIsIncome] = useState<boolean>(false);
     // const [dateFilteredExpenses, setDateFilteredExpenses] = useState<Array<IExpense>>([]);
-    const [totalCost, setTotalCost] = useState<number>(0);
-    const [totalIncome, setTotalIncome] = useState<number>(0);
+    const [isYtd, setIsYtd] = useState<boolean>(true);
+    // const [diff, setDiff] = useState<number>(0);
 
-  const expenses = expensesQuery.data ?? [];
+    const expenses = expensesQuery.data ?? [];
+    const income = incomeQuery.data ?? [];
+
+    const matches = (item: { date: string; user: string }) =>
+        (!startDate || item.date >= startDate) &&
+        (!endDate || item.date <= endDate)
+    // (!user || item.user === user)
+
 
     const dateFilteredExpenses = useMemo(() => {
-        return expenses.filter((e) => e.date >= startDate && e.date <= endDate)
+        return expenses.filter(matches);
     }, [expenses, startDate, endDate]);
+
+    const dateFilteredIncome = useMemo(() => {
+        return income.filter(matches);
+    }, [income, startDate, endDate])
 
 
 
@@ -67,28 +76,23 @@ function HomePageComponent() {
     function handleDateFilter() {
         let startDateString = dateToIso(startDateInput.current?.value);
         let endDateString = dateToIso(endDateInput.current?.value);
-        let dateFilteredExpenses = expenses.filter((e) => e.date >= startDateString && e.date <= endDateString);
-        let dateFilteredIncome = income.filter((i) => i.date >= startDateString && i.date <= endDateString);
-        let calculatedTotalCost = dateFilteredExpenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
-        let calculatedTotalIncome = dateFilteredIncome.reduce((sum: Number, income: any) => sum + income.amount, 0).toFixed(2);
-        console.log("calculated Income:", calculatedTotalIncome);
-        console.log("dateFilteredIncome:", dateFilteredIncome);
-        setTotalCost(calculatedTotalCost);
-        setTotalIncome(calculatedTotalIncome);
-        setStartDate(startDateString || null);
-        setEndDate(endDateString || null);
+        setStartDate(startDateString || '');
+        setEndDate(endDateString || '');
+        console.log("startDate", startDate);
+        setIsYtd(false);
     }
 
     function resetDateFilter() {
+        setIsYtd(true);
         setStartDate(null);
         setEndDate(null);
     }
 
     function handleIsIncome() {
         setIsIncome((prev) => !prev);
-        console.log("isIncome", isIncome);
     }
 
+    // makes the input fields appear mm/dd/yy and doesn't require the user to type the '/'s
     function formatDateInput(value) {
         // strip non-digits
         let digits = value.replace(/\D/g, '');
@@ -116,22 +120,23 @@ function HomePageComponent() {
 
 
 
-    if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
-    if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
-    if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
-    if (incomeQuery.isError) return <div>Income Error: {(incomeQuery.error as Error).message}</div>;
+    // if (expensesQuery.isLoading || categoriesQuery.isLoading) return <div>Loading...</div>;
+    // if (expensesQuery.isError) return <div>Expenses Error: {(expensesQuery.error as Error).message}</div>;
+    // if (categoriesQuery.isError) return <div>Categories Error: {(categoriesQuery.error as Error).message}</div>;
+    // if (incomeQuery.isError) return <div>Income Error: {(incomeQuery.error as Error).message}</div>;
 
     // only access data after loading checks
     // const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
-    const income = incomeQuery.data;
-    console.log('expenses', expenses);
-    console.log('income', income);
 
 
-    // const totalCost = expenses.reduce((sum: Number, expense: any) => sum + expense.cost, 0).toFixed(2);
-    // const totalIncome = income.reduce((sum: number, income: any) => sum + income.amount, 0).toFixed(2);
-    // var diff = totalIncome - totalCost;
+    const visibleExpenses = isYtd ? expenses : dateFilteredExpenses;
+    const visibleIncome = isYtd ? income : dateFilteredIncome;
+
+    const totalCost = visibleExpenses.reduce((sum, e) => sum + e.cost, 0)
+    const totalIncome = visibleIncome.reduce((sum, i) => sum + i.amount, 0)
+    const diff = totalIncome - totalCost;
+
 
 
 
@@ -144,12 +149,11 @@ function HomePageComponent() {
                         <h3>{isIncome ? "Income" : "Expenses"}</h3>
                     </div>
                     <div className='transaction-scroll-pane'>
-                        {isIncome ?
-                            income.map((income: IIncome) => (
-                                <TransactionCard key={income.incomeId} transaction={income} />
+                        {isIncome
+                            ? visibleIncome.map((inc: IIncome) => (
+                                <TransactionCard key={inc.incomeId} transaction={inc} />
                             ))
-                            :
-                            dateFilteredExpenses.map((expense: IExpense) => (
+                            : visibleExpenses.map((expense: IExpense) => (
                                 <TransactionCard key={expense.expenseId} transaction={expense} />
                             ))
                         }
@@ -168,7 +172,7 @@ function HomePageComponent() {
                 <div className="col-5 charts-col h-100 d-flex flex-column">
 
                     <div className='charts d-flex center' style={{ flex: 1, minHeight: 0 }}>
-                        <ChartComponent isIncome={isIncome} dateFilterStartDate={startDate} dateFilterEndDate={endDate} setExpandCategory={setExpandCategory} expandCategory={expandCategory} showCategories={viewCategories} showSubcategories={viewSubcategories} />
+                        <ChartComponent visibleIncome={visibleIncome} visibleExpenses={visibleExpenses} isIncome={isIncome} setExpandCategory={setExpandCategory} expandCategory={expandCategory} />
                     </div>
                 </div>
 
@@ -186,16 +190,16 @@ function HomePageComponent() {
                         {!isIncome ? (
                             // render expenses
                             <div className='d-flex total-expense center' style={{ flex: "0 0 10%" }}>
-                                <h2 className='neg'>${totalCost}</h2> {/* this should probably change to accomodate different totals*/}
+                                <h2 className='neg'>${totalCost.toFixed(2)}</h2>
                             </div>
                         ) : (
                             // render income
                             <div className='d-flex month-diff center' style={{ flex: "0 0 10%" }}>
-                                <h2 className='pos'>${totalIncome}</h2>
+                                <h2 className='pos'>${totalIncome.toFixed(2)}</h2>
                             </div>
                         )}
                     </div>
-                    {/* <div className='d-flex center'>Diff: ${diff}</div> */}
+                    <div className='d-flex center'>Diff: ${diff.toFixed(2)}</div>
                     <div className='d-flex center'>
                         <button className='btn custom-btn' onClick={handleIsIncome}>{isIncome === true ? "View Expenses" : "View Income"}</button>
                     </div>
