@@ -5,6 +5,7 @@ import NavBar from './component/NavBarComponent';
 import HomePage from './component/HomePageComponent';
 import Categorize from './component/CategorizeComponent';
 import ManualEntry from './component/ManualEntry/ManualEntryComponent';
+import EditData from './component/EditData/EditDataComponent';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path='/categorize' element={<Categorize />} />
           <Route path='/manual-entry' element={<ManualEntry />} />
+          <Route path='/edit-data' element={<EditData />} />
         </Routes>
       </div>
     </BrowserRouter>

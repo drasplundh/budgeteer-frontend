@@ -1,10 +1,14 @@
 // Parse 'YYYY-MM-DD' as a LOCAL date; returns null if invalid
 function parseIsoLocal(s: string): Date | null {
+  if (s != null) {
   const [y, m, d] = s.split('-').map(Number);
+
+  
   const date = new Date(y, m - 1, d);
   const valid =
     date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
   return valid ? date : null;
+  }
 }
 
 export function dateFormat(dateString: string) {

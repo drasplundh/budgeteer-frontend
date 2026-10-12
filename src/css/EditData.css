@@ -1,0 +1,43 @@
+.container {
+    margin-top: 16px;
+    background-color: #FCFAFA;
+}
+
+
+
+
+.container {
+    margin-top: 16px;
+    background-color: #FCFAFA;
+    height: calc(100vh - 16px);   /* subtract anything else above, like a navbar */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.edit-row {
+    flex: 1;
+    min-height: 0;   /* lets the row shrink so children can scroll */
+    flex-wrap: nowrap;
+}
+
+.pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.pane-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.selectable {
+    font-size: 16px;
+    transition: font-size 0.1s ease;
+}
+
+.selectable:hover {
+    font-size: 24px;
+}

@@ -80,8 +80,6 @@ function ChartComponent({ isIncome, expandCategory, visibleIncome, visibleExpens
           .reduce((sum: number, e: any) => sum + e.cost, 0),
         (sc) => sc.subcategoryName
       );
-      console.log("result.data:", result.data);
-      console.log("result.labels", result.labels);
       data = result.data;
       labels = result.labels;
 

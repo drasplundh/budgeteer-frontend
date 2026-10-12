@@ -38,7 +38,6 @@ function Categorize() {
 
     const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
-    console.log("categories", categories);
     const subcategories = subcategoriesQuery.data as any[];
 
     const uncategorized = expenses.filter((expense: any) => expense.subcategory === null);
