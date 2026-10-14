@@ -1,5 +1,5 @@
 import { IExpense } from '../../model/Expense';
-type ExpenseDraft = Omit<IExpense, 'cost'> & { cost: string };
+
 
 interface EditableRowProps {
     isEditing: boolean;

@@ -4,8 +4,11 @@ import { fetchExpenses, updateExpense } from '../../api/ExpenseApi';
 import { fetchCategories } from "../../api/CategoryApi";
 import { fetchSubcategories } from '../../api/SubcategoryApi';
 import { IExpense } from '../../model/Expense';
+import { ICategory } from '../../model/Category';
+import { ISubcategory } from '../../model/Subcategory';
 import { useState } from 'react';
 import EditableRow from './EditableRow';
+import EditModal from './EditModal';
 
 
 function EditDataComponent() {
@@ -25,6 +28,9 @@ function EditDataComponent() {
 
     const [transactionSelected, setTransactionSelected] = useState<number | null>(null);
     const [draft, setDraft] = useState<IExpense>(null);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
+    const [selectedSubcategory, setSelectedSubcategory] = useState<ISubcategory | null>(null);
 
 
     function handleSelectTransaction(expense: IExpense) {
@@ -37,8 +43,31 @@ function EditDataComponent() {
     setDraft(null);
 }
 
+    function handleOpenModalCategory(category) {
+        setSelectedCategory(category);
+        setSelectedSubcategory(null);
+        setIsModalOpen(true);
+    }
+
+    function handleOpenModalSubcategory(subcategory) {
+        setSelectedSubcategory(subcategory)
+        setSelectedCategory(null);
+        setIsModalOpen(true);
+    }
+
+    function handleCloseModal() {
+        setIsModalOpen(false);
+    }
+
     return (
         <div className="container">
+            <EditModal 
+            isOpen={isModalOpen} 
+            onClose={handleCloseModal}
+            onCategorySaved={() => categoriesQuery.refetch()} 
+            category={selectedCategory} 
+            subcategory={selectedSubcategory}
+            onSubcategorySaved={()=> subcategoriesQuery.refetch()}/>
             <div className="searchBar mb-2">
                 <input className="form-control" />
             </div>
@@ -74,15 +103,6 @@ function EditDataComponent() {
                                                 onDraftChange={setDraft}
                                                 onCancel={handleCancel}
                                             />
-                                            //     <td className="cell-r">{expense.cost}</td>
-                                            //     <td className="cell-r">{expense.date}</td>
-                                            //     <td className="cell-r">{expense.subcategory?.category?.categoryName}</td>
-                                            //     <td className="cell-r">{expense.subcategory?.subcategoryName}</td>
-                                            //     <td>
-                                            //         <button onClick={() => handleSelectTransaction(expense)}>Edit</button>
-                                            //         <button>Delete</button>
-                                            //     </td>
-                                            // </tr>)
                                         )
                                     })
                                 ) : (
@@ -101,7 +121,7 @@ function EditDataComponent() {
                                 {categories ? (
                                     categories.map((c) => (
                                         <tr key={c.categoryId}>
-                                            <td className='selectable'>{c.categoryName}</td>
+                                            <td onClick={() => handleOpenModalCategory(c)} className='selectable'>{c.categoryName}</td>
                                         </tr>
                                     ))
                                 ) : (
@@ -120,7 +140,7 @@ function EditDataComponent() {
                                 {subcategories ? (
                                     subcategories.map((sc) => (
                                         <tr key={sc.subcategoryId}>
-                                            <td className="selectable">{sc.subcategoryName}</td>
+                                            <td onClick={() => handleOpenModalSubcategory(sc)} className="selectable">{sc.subcategoryName}</td>
                                         </tr>
                                     ))
                                 ) : (

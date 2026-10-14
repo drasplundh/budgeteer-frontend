@@ -6,8 +6,10 @@ import HomePage from './component/HomePageComponent';
 import Categorize from './component/CategorizeComponent';
 import ManualEntry from './component/ManualEntry/ManualEntryComponent';
 import EditData from './component/EditData/EditDataComponent';
+import Modal from 'react-modal';
 
 function App() {
+  Modal.setAppElement('#root');
   return (
     <BrowserRouter>
       <div className='app-layout'>
