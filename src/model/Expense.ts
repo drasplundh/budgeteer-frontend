@@ -7,8 +7,10 @@ export interface IExpense {
     user: string,
     subcategory?: {
         subcategoryName: string,
+        subcategoryId: number,
         category?: {
             categoryName: string
+            categoryId: number,
         }
     }
 }

@@ -1,5 +1,5 @@
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchExpenses, updateExpense } from '../api/ExpenseApi';
+import { fetchExpenses, categorizeExpense } from '../api/ExpenseApi';
 import { fetchCategories } from "../api/CategoryApi";
 import { fetchSubcategories } from '../api/SubcategoryApi';
 import { useState } from 'react'
@@ -15,9 +15,9 @@ function Categorize() {
 
     const queryClient = useQueryClient();
 
-    const { mutate: updateExpenseMutation } = useMutation({
+    const { mutate: categorizeExpenseMutation } = useMutation({
         mutationFn: (updateCategoryRequest: { expenseId: number, categoryName: string, subcategoryName?: string }) =>
-            updateExpense(updateCategoryRequest),
+            categorizeExpense(updateCategoryRequest),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['expenses'] })
         }
@@ -152,13 +152,13 @@ function Categorize() {
                                                             // if (e.key === 'Enter') {
                                                             //     if (categoryDidYouMean) {
                                                             //         const confirmed = window.confirm(`Did you mean "${categoryDidYouMean}"?`);
-                                                            //         updateExpenseMutation({
+                                                            //         categorizeExpenseMutation({
                                                             //             expenseId: expense.expenseId,
                                                             //             categoryName: confirmed ? categoryDidYouMean : categoryInput
                                                             //         });
                                                             //         return;
                                                             //     }
-                                                            //     updateExpenseMutation({
+                                                            //     categorizeExpenseMutation({
                                                             //         expenseId: expense.expenseId,
                                                             //         categoryName: categoryInput
                                                             //     });
@@ -224,14 +224,14 @@ function Categorize() {
                                                                         if (categoryDidYouMean) finalCategoryName = categoryDidYouMean;
                                                                         if (subcategoryDidYouMean) finalSubcategoryName = subcategoryDidYouMean;
                                                                     }
-                                                                    updateExpenseMutation({
+                                                                    categorizeExpenseMutation({
                                                                         expenseId: expense.expenseId,
                                                                         categoryName: finalCategoryName,
                                                                         subcategoryName: finalSubcategoryName
                                                                     });
                                                                     return;
                                                                 }
-                                                                updateExpenseMutation({
+                                                                categorizeExpenseMutation({
                                                                     expenseId: expense.expenseId,
                                                                     categoryName: finalCategoryName,
                                                                     subcategoryName: finalSubcategoryName

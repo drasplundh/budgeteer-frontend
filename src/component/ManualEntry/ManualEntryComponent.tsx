@@ -1,6 +1,6 @@
 import '../../css/ManualEntry.css'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchExpenses, updateExpense, createExpense } from '../../api/ExpenseApi';
+import { fetchExpenses, categorizeExpense, createExpense } from '../../api/ExpenseApi';
 import { fetchIncome, createIncome } from '../../api/IncomeApi';
 import { useState } from 'react'
 import ExpenseForm from "./ExpenseForm";
@@ -34,9 +34,9 @@ const [showToast, setShowToast] = useState(false);
 
     const queryClient = useQueryClient();
 
-    const { mutate: updateExpenseMutation } = useMutation({
+    const { mutate: categorizeExpenseMutation } = useMutation({
         mutationFn: (updateCategoryRequest: { expenseId: number, categoryName: string, subcategoryName?: string }) =>
-            updateExpense(updateCategoryRequest),
+            categorizeExpense(updateCategoryRequest),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['expenses'] })
 

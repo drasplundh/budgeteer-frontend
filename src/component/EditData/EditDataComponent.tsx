@@ -1,6 +1,6 @@
 import '../../css/EditData.css';
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchExpenses, updateExpense } from '../../api/ExpenseApi';
+import { fetchExpenses, updateExpense, deleteExpense } from '../../api/ExpenseApi';
 import { fetchCategories } from "../../api/CategoryApi";
 import { fetchSubcategories } from '../../api/SubcategoryApi';
 import { IExpense } from '../../model/Expense';
@@ -9,6 +9,7 @@ import { ISubcategory } from '../../model/Subcategory';
 import { useState } from 'react';
 import EditableRow from './EditableRow';
 import EditModal from './EditModal';
+import DeleteModal from './DeleteModal';
 
 
 function EditDataComponent() {
@@ -24,11 +25,12 @@ function EditDataComponent() {
 
     const expenses = expensesQuery.data;
     const categories = categoriesQuery.data;
-    const subcategories = subcategoriesQuery.data as any[];
+    const subcategories = subcategoriesQuery.data;
 
     const [transactionSelected, setTransactionSelected] = useState<number | null>(null);
     const [draft, setDraft] = useState<IExpense>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [expenseToDelete, setExpenseToDelete] = useState<IExpense>(null);
     const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
     const [selectedSubcategory, setSelectedSubcategory] = useState<ISubcategory | null>(null);
 
@@ -39,9 +41,9 @@ function EditDataComponent() {
     }
 
     function handleCancel() {
-    setTransactionSelected(null);
-    setDraft(null);
-}
+        setTransactionSelected(null);
+        setDraft(null);
+    }
 
     function handleOpenModalCategory(category) {
         setSelectedCategory(category);
@@ -55,19 +57,63 @@ function EditDataComponent() {
         setIsModalOpen(true);
     }
 
+
     function handleCloseModal() {
         setIsModalOpen(false);
     }
 
+    async function handleAccept(draft) {
+        console.log("draft", draft);
+        const updateExpenseRequest = {
+            expenseId: draft.expenseId,
+            cost: draft.cost,
+            vendor: draft.vendor,
+            date: draft.date,
+            subcategoryId: draft.subcategory?.subcategoryId,
+        }
+        console.log(updateExpenseRequest)
+        await updateExpense(updateExpenseRequest);
+        expensesQuery.refetch();
+        handleCancel();
+    }
+
+    function handleDelete(expense: IExpense) {
+        console.log("expense:", expense);
+        setExpenseToDelete(expense);
+        console.log(expenseToDelete);
+    }
+
+    function handleCancelDelete() {
+        setExpenseToDelete(null);
+    }
+
+    async function handleConfirmDelete() {
+        try {
+            await deleteExpense(expenseToDelete.expenseId);
+            await expensesQuery.refetch();
+            setExpenseToDelete(null);
+        } catch (error) {
+            console.error("Delete failed:", error);
+        }
+    }
+
+
     return (
         <div className="container">
-            <EditModal 
-            isOpen={isModalOpen} 
-            onClose={handleCloseModal}
-            onCategorySaved={() => categoriesQuery.refetch()} 
-            category={selectedCategory} 
-            subcategory={selectedSubcategory}
-            onSubcategorySaved={()=> subcategoriesQuery.refetch()}/>
+            <DeleteModal
+                isOpen={expenseToDelete !== null}
+                message={` ${expenseToDelete?.vendor}`}
+                onConfirm={handleConfirmDelete}
+                onClose={handleCancelDelete}
+            />
+
+            <EditModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onCategorySaved={() => categoriesQuery.refetch()}
+                category={selectedCategory}
+                subcategory={selectedSubcategory}
+                onSubcategorySaved={() => subcategoriesQuery.refetch()} />
             <div className="searchBar mb-2">
                 <input className="form-control" />
             </div>
@@ -77,12 +123,13 @@ function EditDataComponent() {
                     <table className="table mb-0 table-head">
                         <thead>
                             <tr>
-                                <th className="cell-l">Vendor</th>
-                                <th className="cell-r">Cost</th>
-                                <th className="cell-r">Date</th>
-                                <th className="cell-r">Category</th>
-                                <th className="cell-r">Subcategory</th>
-                                <th className="cell-r">Edit</th>
+                                <th className='vendor-cell'>Vendor</th>
+                                <th className="cell-r cost-cell">Cost</th>
+                                <th className="cell-r date-cell">Date</th>
+                                <th className="cell-r category-cell">Category</th>
+                                <th className="cell-r subcategory-cell">Subcategory</th>
+                                <th className='cell-r user-cell'>User</th>
+                                <th className="cell-r actions-cell">Edit</th>
                             </tr>
                         </thead>
                     </table>
@@ -94,14 +141,18 @@ function EditDataComponent() {
                                         const isEditing = expense.expenseId === transactionSelected;
 
                                         return (
-                                            <EditableRow 
-                                                key={expense.expenseId} 
-                                                isEditing={isEditing} 
-                                                expense={expense} 
-                                                draft={draft} 
-                                                onEdit={handleSelectTransaction}  
+                                            <EditableRow
+                                                key={expense.expenseId}
+                                                isEditing={isEditing}
+                                                expense={expense}
+                                                draft={draft}
+                                                onEdit={handleSelectTransaction}
                                                 onDraftChange={setDraft}
                                                 onCancel={handleCancel}
+                                                categories={categories}
+                                                subcategories={subcategories}
+                                                onAccept={handleAccept}
+                                                onDelete={handleDelete}
                                             />
                                         )
                                     })

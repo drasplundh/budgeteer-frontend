@@ -21,6 +21,10 @@
     flex-wrap: nowrap;
 }
 
+.actions-cell {
+    white-space: nowrap;
+}
+
 .pane {
     display: flex;
     flex-direction: column;
@@ -41,3 +45,33 @@
 .selectable:hover {
     font-size: 24px;
 }
+/* .vendor-cell {
+    width: 5%;
+}
+
+*/
+.cost-cell {
+    width: 15%;
+}
+
+/*
+
+.date-cell {
+    width: 15%;
+}
+
+.category-cell {
+    width: 15%;
+}
+
+.subcategory-cell {
+    width: 15%;
+}
+
+.user-cell {
+    width: 15%;
+}
+
+.actions-cell {
+    width: 20%;
+} */
