@@ -66,7 +66,6 @@ function Categorize() {
 
                                 // --- Category fuzzy match ---
                                 const categoryNames = categories.map((c: any) => c.categoryName);
-                                console.log("categoryNames", categoryNames);
                                 const categoryInput = categoryInputs[expense.expenseId] ?? '';
                                 const categoryMatch = categoryInput.length >= 3
                                     ? search(categoryInput, categoryNames, { threshold: 0.4, returnMatchData: true })[0] as { item: string; original: string, score: number } | undefined

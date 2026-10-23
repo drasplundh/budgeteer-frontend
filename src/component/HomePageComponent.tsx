@@ -57,17 +57,17 @@ function HomePageComponent() {
 
 
 
-    function handleSubcategories() {
-        setViewSubcategories(true);
-        setViewCategories(false);
-        setSelected('subcategories');
-    }
+    // function handleSubcategories() {
+    //     setViewSubcategories(true);
+    //     setViewCategories(false);
+    //     setSelected('subcategories');
+    // }
 
-    function handleCategories() {
-        setViewSubcategories(false);
-        setViewCategories(true);
-        setSelected('categories');
-    }
+    // function handleCategories() {
+    //     setViewSubcategories(false);
+    //     setViewCategories(true);
+    //     setSelected('categories');
+    // }
 
     function resetExpandCategory() {
         setExpandCategory(null);
@@ -136,6 +136,8 @@ function HomePageComponent() {
     const totalCost = visibleExpenses.reduce((sum, e) => sum + e.cost, 0)
     const totalIncome = visibleIncome.reduce((sum, i) => sum + i.amount, 0)
     const diff = totalIncome - totalCost;
+
+    console.log("visible expenses", visibleExpenses);
 
 
 
