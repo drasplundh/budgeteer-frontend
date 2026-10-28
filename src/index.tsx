@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import AuthGate from './Security/AuthGate';
 
 import {
   QueryClient,
@@ -16,11 +17,13 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
-  <QueryClientProvider client={queryClient}>
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  </QueryClientProvider>
+  <AuthGate>
+    <QueryClientProvider client={queryClient}>
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    </QueryClientProvider>
+  </AuthGate>
 
 );
 
